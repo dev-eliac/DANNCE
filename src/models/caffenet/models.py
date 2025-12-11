@@ -84,7 +84,7 @@ def caffenet(num_classes, pretrained=True):
 
     if pretrained:
         current_path = pathlib.Path(__file__).parent.absolute()
-        model_path = (os.path.join(current_path, "pretrained_alexnet.pth"))
+        model_path = "/content/drive/MyDrive/models/pretrained_alexnet.pth"
         state_dict = torch.load(model_path)
         del state_dict["classifier.fc8.weight"]
         del state_dict["classifier.fc8.bias"]
