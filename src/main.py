@@ -334,7 +334,7 @@ if __name__ == '__main__':
         train = torch.utils.data.DataLoader(trainset,
                                             batch_size=args.batch_size,
                                             drop_last=False,
-                                            num_workers=6,
+                                            num_workers=12,
                                             shuffle=True)
         if args.add_val:
             valset = Augmentation(splits[heldout]['val'](),
@@ -344,7 +344,7 @@ if __name__ == '__main__':
             val = torch.utils.data.DataLoader(valset,
                                               batch_size=args.batch_size,
                                               drop_last=False,
-                                              num_workers=6,
+                                              num_workers=12,
                                               shuffle=True)
 
         testset = Augmentation(splits[heldout]['test'](),
@@ -354,7 +354,7 @@ if __name__ == '__main__':
         test = torch.utils.data.DataLoader(testset,
                                            batch_size=args.batch_size,
                                            drop_last=False,
-                                           num_workers=6,
+                                           num_workers=12,
                                            shuffle=True)
 
         print(f'Starting {heldout}...')
