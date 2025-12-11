@@ -1,0 +1,22 @@
+args:  Namespace(ablate_blur=False, add_val=False, adv_blur_sigma=1, adv_blur_step=4, adv_kl_weight=1.0, adversarial_examples=True, adversarial_examples_lr=0.001, adversarial_examples_ratio=0.5, adversarial_examples_wd=0.001, adversarial_train_steps=5, batch_size=128, blur_at_last_step=False, cj_mag=1, classifier_lr=0.01, classify_adv_exp=False, color_jitter=False, dann_conv_layers=False, dann_depth=1, dann_size=1, dataset='PACS', domain_adversary=True, domain_adversary_lr=0.01, domain_adversary_weight=1.0, early_adversary_supression=True, entropy=True, entropy_weight=1, even_lower_lr_vlcs=False, features_lr=0.001, gpu=0, leave_out_domain=None, lr_step=24, matsuura_augmentation=True, model='caffenet', momentum=0.9, nnet_generator=False, no_adversary_on_original=False, num_epochs=30, only_augment_half=False, random_seed=16, save_adversarial_examples=False, save_dir='pacs/dannce-alexnet/art-rs16', single_target='art_painting', supression_decay=10.0, use_original_train_set=True, use_rgb_convert=False, verbose=False, wandb=None, weight_decay=0.0005)
+nums_domain:  3
+Using caffenet
+Using domain adversary
+Sequential(
+  (0): Sequential(
+    (0): Linear(in_features=4096, out_features=1024, bias=True)
+    (1): ReLU()
+    (2): Dropout(p=0.5, inplace=False)
+  )
+  (1): Sequential(
+    (0): Linear(in_features=1024, out_features=512, bias=True)
+    (1): ReLU(inplace=True)
+    (2): Dropout(p=0.5, inplace=False)
+  )
+  (2): Linear(in_features=512, out_features=3, bias=True)
+)
+Starting art_painting...
+Starting epoch 0...
+supression=0.00
+beta=0.00
+batch=0
