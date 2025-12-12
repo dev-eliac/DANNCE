@@ -33,7 +33,7 @@ if __name__ == '__main__':
                         default='output')
     parser.add_argument('--model',
                         type=str,
-                        choices=['caffenet', 'resnet'],
+                        choices=['caffenet', 'resnet', 'resnet18', 'resnet50', 'resnext50_32x4d', 'wide_resnet50_2'],
                         help='Model',
                         default='caffenet')
     parser.add_argument(
@@ -256,10 +256,15 @@ if __name__ == '__main__':
                               (model.classifier.parameters(),
                                args.classifier_lr)])
             c_loss_fn = torch.nn.CrossEntropyLoss()
-        elif args.model == 'resnet':
-            print('Using resnet')
-            model = Resnet(num_classes=num_classes).to(device)
+        elif args.model in ['resnet', 'resnet18', 'resnet50', 'resnext50_32x4d', 'wide_resnet50_2']:
+            print(f'Using {args.model}')
+            
+            # Default alias
+            arch = 'resnet18' if args.model == 'resnet' else args.model
+            
+            model = Resnet(num_classes=num_classes, arch=arch).to(device)
             DiscHead = ResNetDiscriminator
+            
             lr_groups.extend([
                 (model.base_model.conv1.parameters(), args.features_lr),
                 (model.base_model.bn1.parameters(), args.features_lr),
@@ -284,9 +289,11 @@ if __name__ == '__main__':
                              size=args.dann_size,
                              depth=args.dann_depth,
                              conv_input=args.dann_conv_layers)).to(device)
-            elif args.model == 'resnet':
+            elif args.model in ['resnet', 'resnet18', 'resnet50', 'resnext50_32x4d', 'wide_resnet50_2']:
+                # Pass the correct input dim (512 for resnet18, 2048 for others)
+                input_dim = model.base_model.fc.in_features
                 domain_adversary = Discriminator(
-                    DiscHead(num_domains * domain_incr)).to(device)
+                    DiscHead(num_domains * domain_incr, input_dim=input_dim)).to(device)
             else:
                 raise AssertionError("model unrecognized")
             lr_groups.append(

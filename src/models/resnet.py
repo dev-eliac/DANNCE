@@ -1,4 +1,4 @@
-from torchvision.models import resnet18
+from torchvision import models
 import torch
 import torch.nn as nn
 import torch.nn.init as init
@@ -9,20 +9,20 @@ ResNet adpated from Matsuura et al. 2020
 """
 
 
-def base_resnet(num_classes):
-    model = resnet18(pretrained=True)
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, num_classes)
-    nn.init.xavier_uniform_(model.fc.weight, .1)
-    nn.init.constant_(model.fc.bias, 0.)
-    return model
+def base_resnet(num_classes, arch='resnet18'):
+    backbone = models.__dict__[arch](pretrained=True)
+    num_ftrs = backbone.fc.in_features
+    backbone.fc = nn.Linear(num_ftrs, num_classes)
+    nn.init.xavier_uniform_(backbone.fc.weight, .1)
+    nn.init.constant_(backbone.fc.bias, 0.)
+    return backbone
 
 
 class Resnet(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, arch='resnet18'):
 
         super(Resnet, self).__init__()
-        base_model = base_resnet(num_classes=num_classes)
+        base_model = base_resnet(num_classes=num_classes, arch=arch)
         self.base_model = base_model
 
         self.conv_features = torch.nn.Sequential(

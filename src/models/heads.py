@@ -44,11 +44,11 @@ class CaffeNetDiscriminator(torch.nn.Module):
 
 
 class ResNetDiscriminator(torch.nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, input_dim=512):
 
         super().__init__()
 
-        self.layers = torch.nn.Sequential(torch.nn.Linear(512, 1024),
+        self.layers = torch.nn.Sequential(torch.nn.Linear(input_dim, 1024),
                                           torch.nn.ReLU(), torch.nn.Dropout(),
                                           torch.nn.Linear(1024, 1024),
                                           torch.nn.ReLU(), torch.nn.Dropout(),

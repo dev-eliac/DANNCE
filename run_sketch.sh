@@ -3,14 +3,15 @@
 # You can change the seed if needed, keeping 16 to match your example
 random_seed=16
 
-echo "Running DANNCE (AlexNet) for Sketch target..."
+echo "Running DANNCE (ResNeXt-50) for Sketch target..."
 
 python3 -m src.main \
+    --model resnext50_32x4d \
     --domain_adversary \
     --early_adversary_supression \
     --matsuura_augmentation \
     --adversarial_examples \
-    --save_dir=pacs/dannce-alexnet/sketch-rs$((random_seed)) \
+    --save_dir=pacs/dannce-resnext50/sketch-rs$((random_seed)) \
     --gpu=0 \
     --random_seed=$random_seed \
     --adversarial_examples_lr=1e-3 \
