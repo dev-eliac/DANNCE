@@ -42,6 +42,23 @@ class CaffeNetDiscriminator(torch.nn.Module):
     def forward(self, x):
         return self.layers(x)
 
+class TransformerDiscriminator(torch.nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+
+        # ViT-Base feature dim is 768
+        self.layers = torch.nn.Sequential(
+            torch.nn.Linear(768, 1024),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(),
+            torch.nn.Linear(1024, 1024),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(),
+            torch.nn.Linear(1024, num_classes)
+        )
+
+    def forward(self, x):
+        return self.layers(x)
 
 class ResNetDiscriminator(torch.nn.Module):
     def __init__(self, num_classes):

@@ -10,7 +10,7 @@ import numpy as np
 from .datasets.utils import get_splits
 from .models.alexnet import CaffeNet
 from .models.resnet import Resnet
-from .models.heads import CaffeNetDiscriminator, ResNetDiscriminator
+from .models.heads import CaffeNetDiscriminator, ResNetDiscriminator, TransformerDiscriminator
 from .models.discriminator import Discriminator
 from .models.entropyLoss import HLoss
 from .datasets.datasets import Augmentation
@@ -18,6 +18,7 @@ from .datasets.utils import normed_tensors, random_color_jitter, \
     matsuura_augmentation
 from .models.utils import set_random_seed, train_adversarial_examples, \
     evaluate
+from .models.vit import VisionTransformer
 
 if __name__ == '__main__':
 
@@ -248,59 +249,44 @@ if __name__ == '__main__':
 
         lr_groups = []
 
-        if args.model == 'caffenet':
-            print('Using caffenet')
-            model = CaffeNet(num_classes=num_classes).to(device)
-            DiscHead = CaffeNetDiscriminator
-            lr_groups.extend([(model.features.parameters(), args.features_lr),
-                              (model.classifier.parameters(),
-                               args.classifier_lr)])
-            c_loss_fn = torch.nn.CrossEntropyLoss()
-        elif args.model == 'resnet':
-            print('Using resnet')
-            model = Resnet(num_classes=num_classes).to(device)
-            DiscHead = ResNetDiscriminator
-            lr_groups.extend([
-                (model.base_model.conv1.parameters(), args.features_lr),
-                (model.base_model.bn1.parameters(), args.features_lr),
-                (model.base_model.layer1.parameters(), args.features_lr),
-                (model.base_model.layer2.parameters(), args.features_lr),
-                (model.base_model.layer3.parameters(), args.features_lr),
-                (model.base_model.layer4.parameters(), args.features_lr),
-                (model.base_model.fc.parameters(), args.classifier_lr)
-            ])
-            c_loss_fn = torch.nn.CrossEntropyLoss()
-        else:
-            raise Exception(f'{args.model} not supported.')
+        # --- NEW TRANSFORMER LOGIC ---
+        print('Using Vision Transformer (Hardcoded)')
+        model = VisionTransformer(num_classes=num_classes).to(device)
+        DiscHead = TransformerDiscriminator
+
+        # FIX: Robust parameter separation to prevent duplication
+        head_params = list(model.base_model.heads.head.parameters())
+        head_ids = list(map(id, head_params))
+        backbone_params = filter(lambda p: id(p) not in head_ids, model.base_model.parameters())
+
+        lr_groups = [
+            {'params': backbone_params, 'lr': args.features_lr},
+            {'params': head_params, 'lr': args.classifier_lr}
+        ]
+        c_loss_fn = torch.nn.CrossEntropyLoss()
 
         if args.domain_adversary:
-            print('Using domain adversary')
+            print('Using domain adversary with Transformer')
             domain_incr = 1
             if args.classify_adv_exp:
                 domain_incr *= 2
-            if args.model == 'caffenet':
-                domain_adversary = Discriminator(
-                    DiscHead(num_domains * domain_incr,
-                             size=args.dann_size,
-                             depth=args.dann_depth,
-                             conv_input=args.dann_conv_layers)).to(device)
-            elif args.model == 'resnet':
-                domain_adversary = Discriminator(
-                    DiscHead(num_domains * domain_incr)).to(device)
-            else:
-                raise AssertionError("model unrecognized")
+            
+            # Use our new TransformerDiscriminator
+            domain_adversary = Discriminator(
+                DiscHead(num_domains * domain_incr)
+            ).to(device)
+            
             lr_groups.append(
-                (domain_adversary.parameters(), args.domain_adversary_lr))
+                {'params': domain_adversary.parameters(), 'lr': args.domain_adversary_lr})
             d_loss_fn = torch.nn.CrossEntropyLoss()
 
+        # SWITCH TO ADAMW (Critical for Transformers)
+        print("Using AdamW Optimizer")
+        # NOTE: When using dicts in lr_groups, we pass them directly to optimizer
         optimizers = [
-            torch.optim.SGD(params,
-                            lr,
-                            momentum=args.momentum,
-                            nesterov=True,
-                            weight_decay=args.weight_decay)
-            for params, lr in lr_groups
+            torch.optim.AdamW(lr_groups, weight_decay=args.weight_decay)
         ]
+        # -----------------------------
 
         schedulers = [
             torch.optim.lr_scheduler.StepLR(optim,
