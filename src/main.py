@@ -6,6 +6,7 @@ import sys
 import torch
 import torch.nn.functional as F
 import numpy as np
+from tqdm import tqdm
 
 from .datasets.utils import get_splits
 from .models.alexnet import CaffeNet
@@ -282,7 +283,6 @@ if __name__ == '__main__':
 
         # SWITCH TO ADAMW (Critical for Transformers)
         print("Using AdamW Optimizer")
-        # NOTE: When using dicts in lr_groups, we pass them directly to optimizer
         optimizers = [
             torch.optim.AdamW(lr_groups, weight_decay=args.weight_decay)
         ]
@@ -374,10 +374,12 @@ if __name__ == '__main__':
                     beta *= supression
                 print(f'beta={beta:.2f}')
                 domain_adversary.set_beta(beta)
+            
+            # --- TQDM LOOP ---
+            train_loader = tqdm(enumerate(train), total=len(train), desc=f'Epoch {epoch}')
+            for i, batch in train_loader:
 
-            for i, batch in enumerate(train):
-
-                print(f'batch={i}')
+                # print(f'batch={i}') # Removed verbose print to avoid cluttering tqdm
 
                 x = batch['img'].to(device)
                 y = batch['label'].to(device)
@@ -425,12 +427,12 @@ if __name__ == '__main__':
                 c_loss = c_loss_fn(yhat, y)
                 running_loss_class += c_loss
 
-                print(f'class_loss={c_loss:.2f}')
+                # print(f'class_loss={c_loss:.2f}') # Reduced verbosity
 
                 if args.entropy:
                     entropy_loss = HLoss()
                     e_loss = entropy_loss(yhat)
-                    print(f'e_loss={e_loss:.2f}')
+                    # print(f'e_loss={e_loss:.2f}')
                     if args.early_adversary_supression:
                         e_loss = e_loss * (supression * args.entropy_weight)
 
@@ -450,7 +452,14 @@ if __name__ == '__main__':
                 if args.entropy:
                     loss += e_loss
 
-                print(f'model_loss={loss:.2f}')
+                # print(f'model_loss={loss:.2f}')
+
+                # Update progress bar
+                train_loader.set_postfix({
+                    'cls': f'{c_loss.item():.2f}',
+                    'dom': f'{d_loss.item():.2f}' if args.domain_adversary else '0',
+                    'tot': f'{loss.item():.2f}'
+                })
 
                 if torch.isnan(loss):
                     anomaly = True
