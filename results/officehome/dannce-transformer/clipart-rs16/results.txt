@@ -1,0 +1,1 @@
+clipart: acc=0.5885 loss=2.4901

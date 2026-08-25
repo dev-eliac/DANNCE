@@ -1,0 +1,1 @@
+product: acc=0.8123 loss=0.9381
